@@ -9,7 +9,7 @@ namespace AntFarm {
 		public override void SetDefaultValues () {
 			base.SetDefaultValues ();
 
-			this.transform.position = new Vector3 (0, 3f, 0);
+			this.transform.position = new Vector3 (0, 9f, 0);
 			this.transform.Rotate (new Vector3 (90f, 0f, 0f));
 		}
 	}

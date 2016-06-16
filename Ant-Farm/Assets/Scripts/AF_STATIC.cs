@@ -17,6 +17,12 @@ namespace AntFarm {
 			}
 		}
 
+		public static AF_FloodFill FloodFill {
+			get { 
+				return GameObject.Find ("FloodFill").GetComponent<AF_FloodFill> (); 
+			}
+		}
+
 		public static GUIStyle GetStyleFromSkin (GUISkin _skin, string _styleName) {
 
 			if (_skin == null || _styleName == string.Empty) return null;
