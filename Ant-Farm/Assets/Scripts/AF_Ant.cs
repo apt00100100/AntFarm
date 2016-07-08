@@ -51,11 +51,11 @@ namespace AntFarm {
 						MeshRenderer renderer = this.GetComponentsInChildren<MeshRenderer> ()[1];
 
 						switch (this.Tile.Type) {
-						case TILE_TYPE.FOOD: 
+						case TILE_TYPE.FOOD:
 							renderer.enabled = true;
 							this.Behavior = BEHAVIOR.HOME; 
 							break;
-						case TILE_TYPE.HOME: 
+						case TILE_TYPE.HOME:
 							renderer.enabled = false;
 							this.Behavior = BEHAVIOR.FOOD;
 							break;
@@ -65,7 +65,7 @@ namespace AntFarm {
 						this.Tile 			= this.NextTile;
 						this.name			= this.AntId + "_Ant-" + this.Behavior.ToString ();
 
-						if (this.Behavior == BEHAVIOR.HOME) this.Tile.DropPheromone ();
+						if (this.Behavior == BEHAVIOR.HOME) AF_STATIC.FloodFill.DropPheromone (this.Tile);
 					}
 				}
 			}

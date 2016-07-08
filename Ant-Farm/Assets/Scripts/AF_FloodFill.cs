@@ -92,6 +92,15 @@ namespace AntFarm {
 				}
 		}
 
+		public void DropPheromone (TileItem _tile) {
+			_tile.DropPheromone (TileItem.PHEROMONE_UP);
+
+			List<TileItem> surroundingTiles = this.FindSurroundingTiles (_tile);
+			surroundingTiles.ForEach (delegate(TileItem x) {
+				x.DropPheromone(TileItem.PHEROMONE_UP * 0.5f);
+			});
+		}
+
 		public TileItem NearestTile (TileItem _tile, BEHAVIOR _behavior, int _variable = 0) {
 			List<TileItem> nearTiles = this.FindSurroundingTiles (_tile);
 
@@ -120,13 +129,32 @@ namespace AntFarm {
 					return nearTiles.Count > 0 ? nearTiles [0] : null;
 			}
 
-			// Return the first food tile, or tile with a greater pheromone level
-			for (int i = 0; i < nearTiles.Count; ++i)
-				if (nearTiles[i].Type == TILE_TYPE.FOOD || (nearTiles[i].Pheromone > nearTiles[i].Value)) 
-					return nearTiles[i];
-			
+			TileItem result = null;
+
+			// Return the first food item if any exist
+			nearTiles.ForEach (delegate(TileItem x) {
+				if (x.Type == TILE_TYPE.FOOD) {
+					result = x;
+					return;
+				}
+			});
+
+			if (result == null) {
+				// Check pheromone levels
+				nearTiles.Sort (delegate(TileItem x, TileItem y) {
+					if (x.Pheromone > 0) return (x.Pheromone > x.Value) ? -1 : 0;
+					return 1;
+				});
+
+				if (nearTiles.Count > 0 && nearTiles [0].Pheromone > 0)
+					result = nearTiles [0];
+			}
+
 			// Default, return a random tile if any are left, else return null
-			return nearTiles.Count > 0 ? nearTiles [Random.Range (0, nearTiles.Count)] : null;
+			if (result == null)
+				result = nearTiles.Count > 0 ? nearTiles [Random.Range (0, nearTiles.Count)] : null;
+
+			return result;
 		}
 
 		public TileItem FindTileByPosition (Vector3 _target) {
@@ -137,7 +165,6 @@ namespace AntFarm {
 				if (dX.magnitude < dY.magnitude) return -1;
 				return 0;
 			});
-			CONSOLE.Log ("Tile:", tileItems [0].Position, "Target:", _target);
 			return tileItems [0];
 		}
 
@@ -202,7 +229,7 @@ namespace AntFarm {
 
 	public class TileItem {
 
-		public static float PHEROMONE_UP = 5f;
+		public static float PHEROMONE_UP = 100f;
 		public static float PHEROMONE_DOWN = 0.2f;
 
 		public GameObject Object;
@@ -228,8 +255,8 @@ namespace AntFarm {
 			}
 		}
 
-		public void DropPheromone () {
-			this.Pheromone += PHEROMONE_UP;
+		public void DropPheromone (float _value) {
+			this.Pheromone += _value;
 		}
 	}
 }
