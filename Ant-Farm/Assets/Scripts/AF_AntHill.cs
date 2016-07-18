@@ -23,6 +23,11 @@ namespace AntFarm {
 			// Initialize Variables
 			this.p_Ants = new List<GameObject> ();
 
+			// Set Tile Type
+			var tile = AF_STATIC.FloodFill.FindTileByPosition (this.transform.position);
+			tile.Type = TILE_TYPE.HOME;
+			tile.Value = float.MaxValue;
+
 			// Spawn ants!!
 			this.SpawnAnts ();
 		}
