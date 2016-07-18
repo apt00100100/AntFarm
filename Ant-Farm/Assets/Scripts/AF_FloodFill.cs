@@ -16,6 +16,7 @@ namespace AntFarm {
 		//
 		public float Size = 10;
 		public float FoodCountScale = 1;
+		public GameObject PheromonePrefab;
 		//
 		private TileItem p_Home;
 		private List<List<TileItem>> p_TileItems = new List<List<TileItem>> ();
@@ -37,7 +38,7 @@ namespace AntFarm {
 			for (int i = 0; i < this.Size; ++i) {
 				var line = string.Empty;
 				for (int j = 0; j < this.Size; ++j) line += this.p_TileItems [i] [j].Value.ToString() + "\t";
-				CONSOLE.Log ("Row " + i.ToString(), line);
+				// CONSOLE.Log ("Row " + i.ToString(), line);
 			}
 		}
 
@@ -83,6 +84,11 @@ namespace AntFarm {
 							tile.Value += (_tile.Position.normalized - tile.Position.normalized).magnitude * 100;
 						});
 						tile.Value /= foodTiles.Count;
+
+						GameObject pheromone = SPAWNER.Spawn (this.PheromonePrefab, tile.Position);
+						pheromone.transform.parent = this.transform;
+						tile.PheromoneObject = pheromone;
+
 						break;
 					case TILE_TYPE.HOME:
 						this.p_Home = tile;
@@ -94,11 +100,18 @@ namespace AntFarm {
 
 		public void DropPheromone (TileItem _tile) {
 			_tile.DropPheromone (TileItem.PHEROMONE_UP);
-
+			
 			List<TileItem> surroundingTiles = this.FindSurroundingTiles (_tile);
-			surroundingTiles.ForEach (delegate(TileItem x) {
-				x.DropPheromone(TileItem.PHEROMONE_UP * 0.5f);
+			surroundingTiles.ForEach (delegate(TileItem t) {
+				t.DropPheromone(TileItem.PHEROMONE_UP * 0.5f);
+
+				this.RecursiveDropPheromone(t, TileItem.PHEROMONE_UP * 0.25f);
 			});
+		}
+
+		protected void RecursiveDropPheromone (TileItem _tile, float _level) {
+			List<TileItem> surroundingTiles = this.FindSurroundingTiles (_tile);
+			surroundingTiles.ForEach (delegate(TileItem t) { t.DropPheromone(_level); });
 		}
 
 		public TileItem NearestTile (TileItem _tile, BEHAVIOR _behavior, int _variable = 0) {
@@ -229,10 +242,13 @@ namespace AntFarm {
 
 	public class TileItem {
 
+		public const float MAX_PHEROMONE = 2500f;
+
 		public static float PHEROMONE_UP = 100f;
-		public static float PHEROMONE_DOWN = 0.2f;
+		public static float PHEROMONE_DOWN = 20f;
 
 		public GameObject Object;
+		public GameObject PheromoneObject;
 		public Vector3 Position;
 		public float Size;
 		public float Value;
@@ -252,11 +268,23 @@ namespace AntFarm {
 				this.Pheromone -= PHEROMONE_DOWN * Time.deltaTime;
 
 				if (this.Pheromone < 0) this.Pheromone = 0;
+
+				this.UpdateLightByPheromone ();
 			}
 		}
 
 		public void DropPheromone (float _value) {
-			this.Pheromone += _value;
+
+			this.Pheromone = Mathf.Clamp (this.Pheromone + _value, 0, MAX_PHEROMONE);
+
+			this.UpdateLightByPheromone ();
+		}
+
+		private void UpdateLightByPheromone () {
+			Light l = this.PheromoneObject.GetComponentInChildren<Light>();
+			if (l != null) {
+				l.range = (this.Pheromone / MAX_PHEROMONE);
+			}
 		}
 	}
 }
