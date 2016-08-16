@@ -13,8 +13,6 @@ namespace AntFarm {
 		
 		static int COUNT = 0;
 
-		const float TOLERANCE = 0.1f;
-
 		public float Speed = 0.5f;
 		public TileItem Tile = null;
 		public GameObject DEBUG_Tile;
@@ -39,34 +37,48 @@ namespace AntFarm {
 			if (this.NextTile == null) {
 				this.Next ();
 			} else {
-				Vector3 offset = (this.NextTile.Position - this.transform.position);
-				this.transform.position += offset.normalized * this.Speed * Time.deltaTime;
-				this.transform.LookAt (this.NextTile.Position);
+				this.MoveToNextTile ();
+			}
+		}
 
-				// Update nearest tile when within tolerance.
-				if (offset.magnitude <= TOLERANCE) {
-					this.Next ();
+		private void MoveToNextTile () {
+			const float TOLERANCE = 0.1f;
 
-					if (this.NextTile != null) {
-						MeshRenderer renderer = this.GetComponentsInChildren<MeshRenderer> ()[1];
+			Vector3 offset = (this.NextTile.Position - this.transform.position);
+			this.transform.position += offset.normalized * this.Speed * Time.deltaTime;
+			this.transform.LookAt (this.NextTile.Position);
 
-						switch (this.Tile.Type) {
+			// Update nearest tile when within tolerance.
+			if (offset.magnitude <= TOLERANCE) {
+				this.Next ();
+
+				if (this.NextTile != null) {
+					MeshRenderer renderer = this.GetComponentsInChildren<MeshRenderer> ()[1];
+
+					switch (this.Tile.Type) {
 						case TILE_TYPE.FOOD:
+							if (this.Tile.Object != null) {
+								AF_Food food = this.NextTile.Object.GetComponent<AF_Food> ();
+								if (food != null) {
+									food.GatherFood ();
+								}
+							}
 							renderer.enabled = true;
 							this.Behavior = BEHAVIOR.HOME; 
 							break;
+
 						case TILE_TYPE.HOME:
 							renderer.enabled = false;
 							this.Behavior = BEHAVIOR.FOOD;
 							break;
-						}
-
-						this.Tile.Object	= null;
-						this.Tile 			= this.NextTile;
-						this.name			= this.AntId + "_Ant-" + this.Behavior.ToString ();
-
-						if (this.Behavior == BEHAVIOR.HOME) AF_STATIC.FloodFill.DropPheromone (this.Tile);
 					}
+
+					this.Tile.Object	= null;
+					this.Tile 			= this.NextTile;
+					this.name			= this.AntId + "_Ant-" + this.Behavior.ToString ();
+
+					if (this.Behavior == BEHAVIOR.HOME) 
+						AF_STATIC.FloodFill.DropPheromone (this.Tile);
 				}
 			}
 		}
